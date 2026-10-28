@@ -1,27 +1,8 @@
 name: astrbot_plugin_dafeiyu_bridge
 display_name: 大肥鱼记忆桥
 short_desc: 开箱即用的跨端长期记忆，QQ / 桌宠 / 微信共用一个大脑
-desc: |
-  给 AstrBot 一块**独立于平台**的长期记忆库。同一个角色在 QQ、桌面宠物、微信之间记住同一件事。
-
-  ## 开箱即用
-
-  插件自带记忆中枢（纯标准库，无需额外部署）。装上、填个 API Key，就能用：
-  回复前自动检索记忆拼进 prompt，回复后自动把这一轮压成记忆存起来。
-
-  ## 跨端
-
-  中枢同时对外提供 OpenAI 兼容接口。把桌面宠物（或任何 OpenAI 兼容客户端）的 base_url 改成
-  `http://127.0.0.1:8787`，它就和你 QQ 上的角色共享同一份记忆。
-
-  ## 特点
-
-  - 不改动 LivingMemory，两者并存
-  - 中枢挂了、抽取失败都不影响正常聊天（静默降级）
-  - 群友各算各的人，不会串到主人身上
-  - 记忆全部存在本机 SQLite，不上传任何地方
-  - 自带自检记录，同步出问题能直接查原因
-version: 0.3.1
+desc: 给 AstrBot 一块独立于平台的长期记忆库，让同一个角色在 QQ、桌面宠物、微信之间记住同一件事。插件自带记忆中枢（纯标准库，无需额外部署），装上、填个 API Key 就能用：回复前自动检索记忆拼进 prompt，回复后自动把这一轮压成记忆。中枢同时提供 OpenAI 兼容接口，把桌面宠物的 base_url 改成 http://127.0.0.1:8787 就能共享同一份记忆。不改动 LivingMemory；中枢挂了也不影响正常聊天；群友各算各的人不会串到主人身上；记忆全部存在本机 SQLite，不上传任何地方。
+version: 0.3.2
 author: dafeiyu
 repo: https://github.com/Junyuran/astrbot_plugin_dafeiyu_bridge
 astrbot_version: ">=4.0.0"

@@ -84,6 +84,11 @@ QQ ──┐
 记忆全部存在本机 SQLite（`data/plugin_data/astrbot_plugin_dafeiyu_bridge/brain.db`），
 不经过任何第三方服务。会调用你自己配置的模型接口来做抽取。
 
+## 出问题了？
+
+看 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) —— 里面是实际踩过的坑：
+开机自启被安全软件拦、安全警告弹窗、记忆条数变 0、NapCat 每次扫码、回复说“不知道”怎么查等等。
+
 ## 许可
 
 MIT
