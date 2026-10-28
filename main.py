@@ -14,6 +14,7 @@ import asyncio
 import json
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
@@ -82,7 +83,13 @@ class DafeiyuBridge(Star):
         self._hub_mode = "off"
         self._recent: dict[str, float] = {}
 
+        self.napcat_autostart = bool(self._get("napcat_autostart", False))
+        self.napcat_dir = str(self._get("napcat_dir", "") or "")
+        self.napcat_uin = str(self._get("napcat_uin", "") or "")
+
         self._start_hub()
+        if self.napcat_autostart:
+            self._maybe_start_napcat()
 
         logger.info(
             "[大肥鱼桥] 中枢模式=%s 地址=%s 主人=%s",
@@ -220,6 +227,61 @@ class DafeiyuBridge(Star):
         logger.info(
             "[大肥鱼桥] 已启动内置记忆中枢 http://%s:%s（数据：%s）", host, port, cfg["memory"]["db_path"]
         )
+
+    # ---------- 顺手拉起 NapCat ----------
+
+    @staticmethod
+    def _process_exists(image_name: str) -> bool | None:
+        """True=在跑，False=没在跑，None=查不了（权限/环境限制）。"""
+        if os.name != "nt":
+            return False
+        try:
+            result = subprocess.run(
+                ["tasklist", "/FI", f"IMAGENAME eq {image_name}", "/NH"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+        except Exception:
+            return None
+        if result.returncode != 0:
+            return None
+        out = (result.stdout or "").strip()
+        if not out or "No tasks" in out or "INFO:" in out:
+            return False
+        return image_name.lower() in out.lower()
+
+    def _maybe_start_napcat(self) -> None:
+        """AstrBot 起来时顺带把 NapCat 拉起来（免扫码走快速登录）。"""
+        if os.name != "nt":
+            return
+        if not self.napcat_dir:
+            logger.warning("[大肥鱼桥] 开了 NapCat 自启，但没填 napcat_dir")
+            return
+        exe = os.path.join(self.napcat_dir, "NapCatWinBootMain.exe")
+        if not os.path.exists(exe):
+            logger.warning("[大肥鱼桥] 找不到 %s", exe)
+            return
+        if self._process_exists("NapCatWinBootMain.exe") is True:
+            logger.info("[大肥鱼桥] NapCat 已经在跑，不重复启动")
+            return
+        cmd = [exe] + ([self.napcat_uin] if self.napcat_uin else [])
+        try:
+            subprocess.Popen(
+                cmd,
+                cwd=self.napcat_dir,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                close_fds=True,
+                # DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP：AstrBot 退出时别把它带走
+                creationflags=0x00000008 | 0x00000200,
+            )
+            logger.info(
+                "[大肥鱼桥] 已拉起 NapCat：%s %s", exe, self.napcat_uin or "(未指定 QQ 号，会走扫码)"
+            )
+        except Exception as exc:
+            logger.warning("[大肥鱼桥] 拉起 NapCat 失败：%s", exc)
 
     # ---------- HTTP ----------
 

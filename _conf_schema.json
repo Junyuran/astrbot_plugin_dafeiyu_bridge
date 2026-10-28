@@ -85,6 +85,24 @@
     "type": "bool",
     "default": true
   },
+  "napcat_autostart": {
+    "description": "顺手拉起 NapCat",
+    "hint": "开启后 AstrBot 启动时自动把 NapCat 拉起来（走快速登录，免扫码）。仅 Windows 有效",
+    "type": "bool",
+    "default": false
+  },
+  "napcat_dir": {
+    "description": "NapCat 目录",
+    "hint": "里面有 NapCatWinBootMain.exe 的那一层，例如 F:\\NapCat\\NapCat.52230.Shell",
+    "type": "string",
+    "default": ""
+  },
+  "napcat_uin": {
+    "description": "机器人 QQ 号",
+    "hint": "填了才会走快速登录；不填就是打开 NapCat 后让你扫码",
+    "type": "string",
+    "default": ""
+  },
   "debug": {
     "description": "输出调试日志",
     "hint": "排查问题时打开，能在 AstrBot 日志里看到注入/入库记录",
