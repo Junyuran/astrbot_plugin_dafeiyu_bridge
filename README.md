@@ -30,6 +30,20 @@ QQ ──┐
 中枢同时是 **OpenAI 兼容接口**。把桌面宠物的 `base_url` 改成 `http://127.0.0.1:8787`，
 它就和你 QQ 上的角色共享同一份记忆——桌宠那边一行代码都不用改。
 
+## 一键安装（Windows，省去手动配置）
+
+在 [Releases](https://github.com/Junyuran/astrbot_plugin_dafeiyu_bridge/releases) 下载
+`dafeiyu-oneclick-*.zip`，解压后双击 `install.cmd`。它会：
+
+- 找到你的 AstrBot，装上本插件
+- 找到你已装好的 NapCat，读出机器人 QQ 号
+- 配好快速登录（免扫码）、自带中枢、自动拉起 NapCat
+- 在桌面建一个「大肥鱼（AstrBot）」快捷方式
+
+它**不包含 NapCat 本体**（NapCat 的许可证禁止再分发），需要你自己先装一次。
+
+> 仓库里的 `installer/` 目录就是它的源码，也可以直接双击里面的 `install.cmd` 运行。
+
 ## 配置
 
 | 键 | 默认 | 说明 |
