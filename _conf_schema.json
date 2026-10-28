@@ -5,6 +5,12 @@
     "type": "bool",
     "default": true
   },
+  "embedded_db_path": {
+    "description": "自带中枢的数据库路径",
+    "hint": "留空 = 放在插件自己的数据目录。如果你另外还跑着独立的中枢，把它指到那边同一个 brain.db，两边才不会各记一份",
+    "type": "string",
+    "default": ""
+  },
   "brain_url": {
     "description": "记忆中枢地址",
     "hint": "默认 http://127.0.0.1:8787。桌宠也改成这个地址，就能和 QQ 共用记忆",

@@ -43,6 +43,7 @@ QQ ──┐
 | `owner_qq_ids` | 空 | 主人 QQ 号；留空=私聊的人都是主人 |
 | `only_private` | 开 | 群聊不参与（最安全） |
 | `top_k` | 5 | 每次注入几条 |
+| `embedded_db_path` | 空 | 自带中枢的库文件位置；留空=插件数据目录。若你另外跑着独立中枢，填同一个 `brain.db` 路径才不会分裂 |
 | `inject_enabled` / `ingest_enabled` | 开 | 分别关掉读/写 |
 | `diag_enabled` | 开 | 上报自检记录，排查「为什么没同步」 |
 | `debug` | 关 | 控制台打日志 |

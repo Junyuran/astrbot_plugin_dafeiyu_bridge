@@ -73,6 +73,7 @@ class DafeiyuBridge(Star):
         self.diag_enabled = bool(self._get("diag_enabled", True))
 
         self.embedded = bool(self._get("embedded", True))
+        self.embedded_db = str(self._get("embedded_db_path", "") or "")
         self.upstream_base = str(self._get("upstream_base_url", "https://api.deepseek.com") or "")
         self.upstream_model = str(self._get("upstream_model", "deepseek-chat") or "")
         self.upstream_key = str(self._get("upstream_api_key", "") or "")
@@ -158,6 +159,8 @@ class DafeiyuBridge(Star):
             return
 
         data_dir = self._data_dir()
+        # 指定了就共用那个库，避免「外部中枢」和「自带中枢」各写一份、记忆分裂
+        db_path = self.embedded_db or os.path.join(data_dir, "brain.db")
         cfg = {
             "server": {"host": host, "port": port, "token": self.token, "host_public": False},
             "upstream": {
@@ -177,7 +180,7 @@ class DafeiyuBridge(Star):
                 "inject_max_chars": 900,
                 "inject_header": "【你记得关于这个人的事】",
                 "dedupe_jaccard": 0.86,
-                "db_path": os.path.join(data_dir, "brain.db"),
+                "db_path": db_path,
             },
             "extraction": {
                 "enabled": True,
