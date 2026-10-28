@@ -23,7 +23,7 @@ desc: |
   - 自带自检记录，同步出问题能直接查原因
 version: 0.2.0
 author: dafeiyu
-repo: https://github.com/CHANGE-ME/astrbot_plugin_dafeiyu_bridge
+repo: https://github.com/Junyuran/astrbot_plugin_dafeiyu_bridge
 astrbot_version: ">=4.0.0"
 support_platforms:
   - aiocqhttp
