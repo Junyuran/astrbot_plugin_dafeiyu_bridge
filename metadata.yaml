@@ -21,7 +21,7 @@ desc: |
   - 群友各算各的人，不会串到主人身上
   - 记忆全部存在本机 SQLite，不上传任何地方
   - 自带自检记录，同步出问题能直接查原因
-version: 0.2.0
+version: 0.2.1
 author: dafeiyu
 repo: https://github.com/Junyuran/astrbot_plugin_dafeiyu_bridge
 astrbot_version: ">=4.0.0"
