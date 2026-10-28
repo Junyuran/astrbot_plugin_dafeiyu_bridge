@@ -80,29 +80,47 @@ class DafeiyuBridge(Star):
         self.upstream_key = str(self._get("upstream_api_key", "") or "")
 
         self._hub = None
-        self._hub_mode = "off"
+        self._hub_mode = "pending" if self.embedded else "external"
+        self._hub_ready = threading.Event()
         self._recent: dict[str, float] = {}
 
         self.napcat_autostart = bool(self._get("napcat_autostart", False))
         self.napcat_dir = str(self._get("napcat_dir", "") or "")
         self.napcat_uin = str(self._get("napcat_uin", "") or "")
 
-        self._start_hub()
-        if self.napcat_autostart:
-            self._maybe_start_napcat()
-
-        logger.info(
-            "[大肥鱼桥] 中枢模式=%s 地址=%s 主人=%s",
-            self._hub_mode,
-            self.base or "(未配置)",
-            self.person,
-        )
-        if self._hub_mode == "embedded" and not self.upstream_key:
-            logger.warning(
-                "[大肥鱼桥] 自带中枢已启动，但没填 upstream_api_key，记忆抽取会失败（聊天注入仍可用）"
-            )
+        # __init__ 是同步的，而探测端口、起 HTTP 服务、查进程都是阻塞操作，
+        # 直接在插件加载链路里做会卡住事件循环。统一丢到后台线程，
+        # 需要用到中枢时再用 _hub_ready 等它（最多等几秒）。
+        threading.Thread(target=self._boot, name="dafeiyu-boot", daemon=True).start()
 
     # ---------- 配置 & 小工具 ----------
+
+    def _boot(self) -> None:
+        """后台完成「起中枢 + 拉 NapCat」，不阻塞 AstrBot 的事件循环。"""
+        try:
+            if self.embedded:
+                self._start_hub()
+            if self.napcat_autostart:
+                self._maybe_start_napcat()
+            logger.info(
+                "[大肥鱼桥] 中枢模式=%s 地址=%s 主人=%s",
+                self._hub_mode,
+                self.base or "(未配置)",
+                self.person,
+            )
+            if self._hub_mode == "embedded" and not self.upstream_key:
+                logger.warning(
+                    "[大肥鱼桥] 自带中枢已启动，但没填 upstream_api_key，记忆抽取会失败（注入仍可用）"
+                )
+        except Exception as exc:
+            logger.warning("[大肥鱼桥] 初始化失败：%s", exc)
+        finally:
+            self._hub_ready.set()
+
+    async def _wait_hub(self, timeout: float = 5.0) -> None:
+        if self._hub_ready.is_set():
+            return
+        await asyncio.to_thread(self._hub_ready.wait, timeout)
 
     def _get(self, key: str, default: Any) -> Any:
         try:
@@ -419,6 +437,7 @@ class DafeiyuBridge(Star):
             if not query.strip():
                 self._diag("req_skip", "empty_query")
                 return
+            await self._wait_hub()
             data = await asyncio.to_thread(
                 self._post, "/memory/recall", {"person_id": person, "query": query, "k": self.top_k}
             )
@@ -465,6 +484,7 @@ class DafeiyuBridge(Star):
             if len(self._recent) > 200:
                 self._recent = {k: v for k, v in self._recent.items() if now - v < 300}
 
+            await self._wait_hub()
             result = await asyncio.to_thread(
                 self._post,
                 "/memory/ingest",
@@ -497,13 +517,17 @@ class DafeiyuBridge(Star):
             yield event.plain_result("记忆桥没配置 brain_url，先到插件设置里填一下。")
             return
         try:
+            await self._wait_hub()
             stats = await asyncio.to_thread(self._get_json, "/memory/stats", 8)
         except Exception as exc:
             yield event.plain_result(f"连不上记忆中枢 {self.base}：{exc}")
             return
-        mode = {"embedded": "自带中枢", "external": "外接中枢", "missing": "缺中枢"}.get(
-            self._hub_mode, self._hub_mode
-        )
+        mode = {
+            "embedded": "自带中枢",
+            "external": "外接中枢",
+            "missing": "缺中枢",
+            "pending": "初始化中",
+        }.get(self._hub_mode, self._hub_mode)
         persons = "、".join(f"{p['person_id']}({p['count']})" for p in stats.get("persons", [])) or "暂无"
         yield event.plain_result(
             f"记忆中枢在线（{mode}）\n地址：{self.base}\n"
