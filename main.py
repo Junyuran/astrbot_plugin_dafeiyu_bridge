@@ -124,7 +124,10 @@ class DafeiyuBridge(Star):
 
             path = str(StarTools.get_data_dir(PLUGIN_NAME))
         except Exception:
-            path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+            # 回退也必须落在 AstrBot 的 plugin_data 下：
+            # <data>/plugins/<插件名>  →  <data>/plugin_data/<插件名>
+            here = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.normpath(os.path.join(here, "..", "..", "plugin_data", PLUGIN_NAME))
         os.makedirs(path, exist_ok=True)
         return path
 
@@ -157,6 +160,7 @@ class DafeiyuBridge(Star):
             return
 
         try:
+            from dafeiyu_brain import logs as brain_logs
             from dafeiyu_brain.httpapi import BrainHTTPServer, Handler
             from dafeiyu_brain.llm import Upstream
             from dafeiyu_brain.store import Store
@@ -164,6 +168,9 @@ class DafeiyuBridge(Star):
             self._hub_mode = "missing"
             logger.warning("[大肥鱼桥] 内置中枢导入失败：%s", exc)
             return
+
+        # 中枢跑在 AstrBot 进程里，日志必须汇进 AstrBot 的日志体系，不能自己另开一套
+        brain_logs.attach(logger)
 
         data_dir = self._data_dir()
         # 指定了就共用那个库，避免「外部中枢」和「自带中枢」各写一份、记忆分裂
@@ -371,6 +378,33 @@ class DafeiyuBridge(Star):
 
     # ---------- 钩子 ----------
 
+    @staticmethod
+    def _append_extra_part(req: Any, block: str) -> bool:
+        """把记忆块作为临时用户内容追加。返回是否注入成功。
+
+        优先用 AstrBot 官方的 extra_user_content_parts（不改 system prompt，
+        不影响 prompt cache）；老版本没有这个字段时退到 prompt 末尾，
+        依然不碰 system_prompt。
+        """
+        try:
+            from astrbot.core.agent.message import TextPart
+
+            part = TextPart(text=block).mark_as_temp()
+            parts = getattr(req, "extra_user_content_parts", None)
+            if parts is None:
+                return False
+            parts.append(part)
+            return True
+        except Exception:
+            pass
+        try:
+            if hasattr(req, "prompt"):
+                req.prompt = ((req.prompt or "").rstrip() + "\n\n" + block).strip()
+                return True
+        except Exception:
+            pass
+        return False
+
     @filter.on_llm_request()
     async def inject_memory(self, event: Any, req: Any) -> None:
         person, scene = self._person_for(event)
@@ -392,7 +426,12 @@ class DafeiyuBridge(Star):
             if not block:
                 self._diag("req_ok", f"hits=0 person={person}")
                 return
-            req.system_prompt = ((req.system_prompt or "").rstrip() + "\n\n" + block).strip()
+            # 关键：绝不改 system_prompt。system 段一旦变化，前序上下文就全部
+            # 命中不了 prompt cache。这里把记忆作为「临时的用户消息附加块」塞进去，
+            # 并 mark_as_temp 保证不落库。
+            if not self._append_extra_part(req, block):
+                self._diag("req_error", "no injection point on ProviderRequest")
+                return
             self._diag("req_ok", f"hits={data.get('count')} person={person}")
             if self.debug:
                 logger.info("[大肥鱼桥] 注入 %s 条记忆（%s）", data.get("count"), person)
