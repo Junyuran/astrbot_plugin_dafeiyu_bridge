@@ -1,0 +1,88 @@
+{
+  "embedded": {
+    "description": "自带记忆中枢",
+    "hint": "开启后插件会自己在 brain_url 的端口上起一个本地记忆服务，不需要另外部署；如果这个端口已经有服务在跑，会直接用它",
+    "type": "bool",
+    "default": true
+  },
+  "brain_url": {
+    "description": "记忆中枢地址",
+    "hint": "默认 http://127.0.0.1:8787。桌宠也改成这个地址，就能和 QQ 共用记忆",
+    "type": "string",
+    "default": "http://127.0.0.1:8787"
+  },
+  "upstream_base_url": {
+    "description": "中枢用的模型接口地址",
+    "hint": "只有自带中枢时才需要。OpenAI 兼容即可，默认 DeepSeek",
+    "type": "string",
+    "default": "https://api.deepseek.com"
+  },
+  "upstream_model": {
+    "description": "中枢用的模型名",
+    "hint": "用来把对话压成记忆，小模型就够",
+    "type": "string",
+    "default": "deepseek-chat"
+  },
+  "upstream_api_key": {
+    "description": "中枢用的 API Key",
+    "hint": "填你自己的 key，只存在本机，用于抽取记忆；不填的话聊天还能注入记忆，但不会记录新记忆",
+    "type": "string",
+    "default": ""
+  },
+  "token": {
+    "description": "访问令牌",
+    "hint": "只有把中枢暴露到别的设备时才需要，本机用留空",
+    "type": "string",
+    "default": ""
+  },
+  "person_id": {
+    "description": "主人的人格 ID",
+    "hint": "主人的 QQ 消息都记到这个人身上；桌宠/微信要填同一个值才能互通",
+    "type": "string",
+    "default": "owner"
+  },
+  "owner_qq_ids": {
+    "description": "主人的 QQ 号",
+    "hint": "一行一个或用逗号分隔。留空 = 私聊的人都算主人；群友永远单独记，不会串到主人身上",
+    "type": "text",
+    "default": ""
+  },
+  "only_private": {
+    "description": "只处理私聊",
+    "hint": "开启后群聊完全不参与，最安全。想连群聊记忆一起共享再关掉",
+    "type": "bool",
+    "default": true
+  },
+  "top_k": {
+    "description": "每次注入几条记忆",
+    "type": "int",
+    "default": 5
+  },
+  "inject_enabled": {
+    "description": "回复前注入记忆",
+    "type": "bool",
+    "default": true
+  },
+  "ingest_enabled": {
+    "description": "回复后写入记忆",
+    "type": "bool",
+    "default": true
+  },
+  "timeout": {
+    "description": "请求超时（秒）",
+    "type": "int",
+    "default": 20
+  },
+  "diag_enabled": {
+    "description": "上报自检记录",
+    "hint": "每次钩子触发/跳过都往中枢写一条记录，排查「为什么没同步」时很有用",
+    "type": "bool",
+    "default": true
+  },
+  "debug": {
+    "description": "输出调试日志",
+    "hint": "排查问题时打开，能在 AstrBot 日志里看到注入/入库记录",
+    "type": "bool",
+    "default": false
+  }
+}
